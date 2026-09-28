@@ -1,0 +1,67 @@
+version: "2"
+
+run:
+  timeout: 10m
+  # Integration tests are part of the codebase and must be linted too, or the
+  # oracle and pipeline tests drift out of the standards everything else keeps.
+  build-tags:
+    - integration
+
+linters:
+  default: standard
+  enable:
+    # Security scanner: hardcoded credentials, weak crypto, unsafe file perms,
+    # missing timeouts. kcac handles a client secret and reads a whole user
+    # directory, so this one earns its place.
+    - gosec
+    # Enforces %w wrapping and errors.Is/As over == and type assertions. The
+    # retry logic and the /children capability probe both branch on typed
+    # errors, so unwrapping has to be correct.
+    - errorlint
+    # HTTP response bodies must be closed, or a 40k-user collection leaks a
+    # connection per request.
+    - bodyclose
+    # Contexts must be passed down, never dropped or replaced with Background:
+    # Ctrl-C has to abort a collection against a customer's server promptly.
+    - contextcheck
+    # Every outbound request must carry a context.
+    - noctx
+    # Flags sloppy error handling that errcheck alone misses.
+    - errchkjson
+    # Catches loop-variable capture and other common footguns.
+    - copyloopvar
+    # Struct tags must actually parse. A typo in a json tag silently yields a
+    # zero value, which for kcac means silently missing entitlements.
+    - musttag
+    # Reports unhandled cases on typed constants — PathKind, AccountClass and
+    # the group-children capability enum are all switched on.
+    - exhaustive
+    - nilerr
+    - unconvert
+    - wastedassign
+
+  settings:
+    exhaustive:
+      default-signifies-exhaustive: true
+    errcheck:
+      check-type-assertions: true
+
+  exclusions:
+    rules:
+      # Tests intentionally construct failure states, point at dead ports and
+      # skip cleanup that production code must not.
+      - path: _test\.go
+        linters:
+          - gosec
+          - bodyclose
+          - noctx
+          - contextcheck
+          # Writes to an httptest ResponseWriter and type assertions on decoded
+          # fixture JSON: a failure there fails the test anyway.
+          - errcheck
+          - errchkjson
+      # The fixture generator writes a realm containing a well-known test
+      # secret, which is the point of a fixture.
+      - path: test/gen/
+        linters:
+          - gosec

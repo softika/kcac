@@ -1,0 +1,76 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "*" ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: unit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27'
+
+      - name: Build
+        run: go build -v ./...
+
+      # The same target contributors run locally, so CI and the working tree
+      # cannot drift apart on formatting, vet or unit tests.
+      - name: Format, vet and unit tests
+        run: make check
+
+      - name: Fixture is up to date
+        run: |
+          make fixture
+          git diff --exit-code testdata/realm-export.json \
+            || { echo "testdata/realm-export.json is stale — run: make fixture"; exit 1; }
+
+  integration:
+    name: integration (keycloak ${{ matrix.keycloak }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 22.0 predates GET /groups/{id}/children (added in 23.0.0) and answers
+        # it with 405, so it exercises the nested-subGroups fallback. The others
+        # track current majors.
+        keycloak: [ "22.0", "24.0", "26.0" ]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27'
+
+      - name: Start seeded Keycloak ${{ matrix.keycloak }}
+        run: make kc-start KC_VERSION=${{ matrix.keycloak }}
+
+      # make test-integration passes -count=1, which is REQUIRED rather than
+      # stylistic: Go caches successful results keyed on the test binary and its
+      # inputs, none of which change when the Keycloak container behind
+      # localhost:8080 changes version. Without it this matrix silently
+      # re-reports the first job's result for every other version.
+      - name: Integration and oracle tests
+        run: make test-integration
+
+      # Coverage is only meaningful with the integration tests running, since
+      # the collector and the oracle checks need a live server.
+      - name: Coverage
+        run: make cover
+
+      - name: Keycloak logs on failure
+        if: failure()
+        run: docker logs --tail 100 kcac-test-keycloak

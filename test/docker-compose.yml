@@ -1,0 +1,31 @@
+# Seeded Keycloak for kcac's integration tests.
+#
+#   docker compose -f test/docker-compose.yml up -d
+#   ./test/wait-for-keycloak.sh
+#
+# KC_VERSION selects the server major, which is how the group-children fallback
+# is exercised: 23+ serves GET /groups/{id}/children, earlier versions nest the
+# tree in /groups instead.
+#
+#   KC_VERSION=22.0 docker compose -f test/docker-compose.yml up -d
+#
+# This realm is a fixture. Its credentials are public by design and must never
+# be reused anywhere real.
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:${KC_VERSION:-26.0}
+    container_name: kcac-test-keycloak
+    command: ["start-dev", "--import-realm"]
+    environment:
+      # Keycloak 26+ reads KC_BOOTSTRAP_ADMIN_*; earlier majors read
+      # KEYCLOAK_ADMIN_*. Both are set so one compose file spans the matrix.
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "false"
+    ports:
+      - "${KC_PORT:-8080}:8080"
+    volumes:
+      - ../testdata/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro

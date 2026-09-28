@@ -1,0 +1,1241 @@
+{
+  "realm": "kcac-test",
+  "enabled": true,
+  "sslRequired": "none",
+  "eventsEnabled": false,
+  "adminEventsEnabled": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "base-employee",
+        "description": "leaf role, reached only through composites"
+      },
+      {
+        "name": "till-supervisor",
+        "description": "composite containing another composite",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "base-employee"
+          ]
+        }
+      },
+      {
+        "name": "store-admin",
+        "description": "composite containing a realm composite AND a client role",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "till-supervisor"
+          ],
+          "client": {
+            "pos-app": [
+              "till-operator"
+            ]
+          }
+        }
+      },
+      {
+        "name": "regional-manager",
+        "description": "top of the three-hop composite chain",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "store-admin"
+          ]
+        }
+      },
+      {
+        "name": "orphan-role",
+        "description": "exists but is assigned to nobody"
+      }
+    ],
+    "client": {
+      "crm-app": [
+        {
+          "name": "viewer"
+        }
+      ],
+      "pos-app": [
+        {
+          "name": "till-operator",
+          "description": "leaf client role"
+        },
+        {
+          "name": "till-admin",
+          "description": "client composite containing a client role",
+          "composite": true,
+          "composites": {
+            "client": {
+              "pos-app": [
+                "till-operator"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "groups": [
+    {
+      "name": "Retail",
+      "path": "/Retail",
+      "realmRoles": [
+        "base-employee"
+      ],
+      "subGroups": [
+        {
+          "name": "StoreManagers",
+          "path": "/Retail/StoreManagers",
+          "realmRoles": [
+            "store-admin"
+          ],
+          "subGroups": [
+            {
+              "name": "Region-East",
+              "path": "/Retail/StoreManagers/Region-East",
+              "clientRoles": {
+                "pos-app": [
+                  "till-admin"
+                ]
+              }
+            },
+            {
+              "name": "Region-West",
+              "path": "/Retail/StoreManagers/Region-West"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "HQ",
+      "path": "/HQ",
+      "realmRoles": [
+        "regional-manager"
+      ]
+    },
+    {
+      "name": "Wide",
+      "path": "/Wide",
+      "subGroups": [
+        {
+          "name": "Sub00",
+          "path": "/Wide/Sub00"
+        },
+        {
+          "name": "Sub01",
+          "path": "/Wide/Sub01"
+        },
+        {
+          "name": "Sub02",
+          "path": "/Wide/Sub02"
+        },
+        {
+          "name": "Sub03",
+          "path": "/Wide/Sub03"
+        },
+        {
+          "name": "Sub04",
+          "path": "/Wide/Sub04"
+        },
+        {
+          "name": "Sub05",
+          "path": "/Wide/Sub05"
+        },
+        {
+          "name": "Sub06",
+          "path": "/Wide/Sub06"
+        },
+        {
+          "name": "Sub07",
+          "path": "/Wide/Sub07"
+        },
+        {
+          "name": "Sub08",
+          "path": "/Wide/Sub08"
+        },
+        {
+          "name": "Sub09",
+          "path": "/Wide/Sub09"
+        },
+        {
+          "name": "Sub10",
+          "path": "/Wide/Sub10"
+        },
+        {
+          "name": "Sub11",
+          "path": "/Wide/Sub11"
+        },
+        {
+          "name": "Sub12",
+          "path": "/Wide/Sub12"
+        },
+        {
+          "name": "Sub13",
+          "path": "/Wide/Sub13"
+        },
+        {
+          "name": "Sub14",
+          "path": "/Wide/Sub14"
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "pos-app",
+      "enabled": true,
+      "publicClient": true,
+      "serviceAccountsEnabled": false,
+      "standardFlowEnabled": true
+    },
+    {
+      "clientId": "crm-app",
+      "enabled": true,
+      "publicClient": true,
+      "serviceAccountsEnabled": false,
+      "standardFlowEnabled": true
+    },
+    {
+      "clientId": "kcac-audit",
+      "enabled": true,
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "secret": "test-secret"
+    }
+  ],
+  "users": [
+    {
+      "username": "m.huber",
+      "enabled": true,
+      "email": "m.huber@example.test",
+      "realmRoles": [
+        "store-admin"
+      ]
+    },
+    {
+      "username": "a.gruber",
+      "enabled": true,
+      "email": "a.gruber@example.test",
+      "groups": [
+        "/Retail/StoreManagers"
+      ]
+    },
+    {
+      "username": "s.novak",
+      "enabled": true,
+      "email": "s.novak@example.test",
+      "groups": [
+        "/Retail/StoreManagers/Region-East"
+      ]
+    },
+    {
+      "username": "d.dual",
+      "enabled": true,
+      "email": "d.dual@example.test",
+      "realmRoles": [
+        "store-admin"
+      ],
+      "groups": [
+        "/Retail/StoreManagers"
+      ]
+    },
+    {
+      "username": "x.disabled",
+      "enabled": false,
+      "email": "x.disabled@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "r.chief",
+      "enabled": true,
+      "email": "r.chief@example.test",
+      "groups": [
+        "/HQ"
+      ]
+    },
+    {
+      "username": "n.nobody",
+      "enabled": true,
+      "email": "n.nobody@example.test"
+    },
+    {
+      "username": "service-account-kcac-audit",
+      "enabled": true,
+      "clientRoles": {
+        "realm-management": [
+          "view-users",
+          "view-clients",
+          "view-realm",
+          "query-users",
+          "query-groups"
+        ]
+      },
+      "serviceAccountClientId": "kcac-audit"
+    },
+    {
+      "username": "bulk0000",
+      "enabled": true,
+      "email": "bulk0000@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0001",
+      "enabled": true,
+      "email": "bulk0001@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0002",
+      "enabled": true,
+      "email": "bulk0002@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0003",
+      "enabled": true,
+      "email": "bulk0003@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0004",
+      "enabled": true,
+      "email": "bulk0004@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0005",
+      "enabled": true,
+      "email": "bulk0005@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0006",
+      "enabled": true,
+      "email": "bulk0006@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0007",
+      "enabled": true,
+      "email": "bulk0007@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0008",
+      "enabled": true,
+      "email": "bulk0008@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0009",
+      "enabled": true,
+      "email": "bulk0009@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0010",
+      "enabled": true,
+      "email": "bulk0010@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0011",
+      "enabled": true,
+      "email": "bulk0011@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0012",
+      "enabled": true,
+      "email": "bulk0012@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0013",
+      "enabled": true,
+      "email": "bulk0013@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0014",
+      "enabled": true,
+      "email": "bulk0014@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0015",
+      "enabled": true,
+      "email": "bulk0015@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0016",
+      "enabled": true,
+      "email": "bulk0016@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0017",
+      "enabled": true,
+      "email": "bulk0017@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0018",
+      "enabled": true,
+      "email": "bulk0018@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0019",
+      "enabled": true,
+      "email": "bulk0019@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0020",
+      "enabled": true,
+      "email": "bulk0020@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0021",
+      "enabled": true,
+      "email": "bulk0021@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0022",
+      "enabled": true,
+      "email": "bulk0022@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0023",
+      "enabled": true,
+      "email": "bulk0023@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0024",
+      "enabled": true,
+      "email": "bulk0024@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0025",
+      "enabled": true,
+      "email": "bulk0025@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0026",
+      "enabled": true,
+      "email": "bulk0026@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0027",
+      "enabled": true,
+      "email": "bulk0027@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0028",
+      "enabled": true,
+      "email": "bulk0028@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0029",
+      "enabled": true,
+      "email": "bulk0029@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0030",
+      "enabled": true,
+      "email": "bulk0030@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0031",
+      "enabled": true,
+      "email": "bulk0031@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0032",
+      "enabled": true,
+      "email": "bulk0032@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0033",
+      "enabled": true,
+      "email": "bulk0033@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0034",
+      "enabled": true,
+      "email": "bulk0034@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0035",
+      "enabled": true,
+      "email": "bulk0035@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0036",
+      "enabled": true,
+      "email": "bulk0036@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0037",
+      "enabled": true,
+      "email": "bulk0037@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0038",
+      "enabled": true,
+      "email": "bulk0038@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0039",
+      "enabled": true,
+      "email": "bulk0039@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0040",
+      "enabled": true,
+      "email": "bulk0040@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0041",
+      "enabled": true,
+      "email": "bulk0041@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0042",
+      "enabled": true,
+      "email": "bulk0042@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0043",
+      "enabled": true,
+      "email": "bulk0043@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0044",
+      "enabled": true,
+      "email": "bulk0044@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0045",
+      "enabled": true,
+      "email": "bulk0045@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0046",
+      "enabled": true,
+      "email": "bulk0046@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0047",
+      "enabled": true,
+      "email": "bulk0047@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0048",
+      "enabled": true,
+      "email": "bulk0048@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0049",
+      "enabled": true,
+      "email": "bulk0049@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0050",
+      "enabled": true,
+      "email": "bulk0050@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0051",
+      "enabled": true,
+      "email": "bulk0051@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0052",
+      "enabled": true,
+      "email": "bulk0052@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0053",
+      "enabled": true,
+      "email": "bulk0053@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0054",
+      "enabled": true,
+      "email": "bulk0054@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0055",
+      "enabled": true,
+      "email": "bulk0055@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0056",
+      "enabled": true,
+      "email": "bulk0056@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0057",
+      "enabled": true,
+      "email": "bulk0057@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0058",
+      "enabled": true,
+      "email": "bulk0058@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0059",
+      "enabled": true,
+      "email": "bulk0059@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0060",
+      "enabled": true,
+      "email": "bulk0060@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0061",
+      "enabled": true,
+      "email": "bulk0061@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0062",
+      "enabled": true,
+      "email": "bulk0062@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0063",
+      "enabled": true,
+      "email": "bulk0063@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0064",
+      "enabled": true,
+      "email": "bulk0064@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0065",
+      "enabled": true,
+      "email": "bulk0065@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0066",
+      "enabled": true,
+      "email": "bulk0066@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0067",
+      "enabled": true,
+      "email": "bulk0067@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0068",
+      "enabled": true,
+      "email": "bulk0068@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0069",
+      "enabled": true,
+      "email": "bulk0069@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0070",
+      "enabled": true,
+      "email": "bulk0070@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0071",
+      "enabled": true,
+      "email": "bulk0071@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0072",
+      "enabled": true,
+      "email": "bulk0072@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0073",
+      "enabled": true,
+      "email": "bulk0073@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0074",
+      "enabled": true,
+      "email": "bulk0074@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0075",
+      "enabled": true,
+      "email": "bulk0075@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0076",
+      "enabled": true,
+      "email": "bulk0076@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0077",
+      "enabled": true,
+      "email": "bulk0077@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0078",
+      "enabled": true,
+      "email": "bulk0078@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0079",
+      "enabled": true,
+      "email": "bulk0079@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0080",
+      "enabled": true,
+      "email": "bulk0080@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0081",
+      "enabled": true,
+      "email": "bulk0081@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0082",
+      "enabled": true,
+      "email": "bulk0082@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0083",
+      "enabled": true,
+      "email": "bulk0083@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0084",
+      "enabled": true,
+      "email": "bulk0084@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0085",
+      "enabled": true,
+      "email": "bulk0085@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0086",
+      "enabled": true,
+      "email": "bulk0086@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0087",
+      "enabled": true,
+      "email": "bulk0087@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0088",
+      "enabled": true,
+      "email": "bulk0088@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0089",
+      "enabled": true,
+      "email": "bulk0089@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0090",
+      "enabled": true,
+      "email": "bulk0090@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0091",
+      "enabled": true,
+      "email": "bulk0091@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0092",
+      "enabled": true,
+      "email": "bulk0092@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0093",
+      "enabled": true,
+      "email": "bulk0093@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0094",
+      "enabled": true,
+      "email": "bulk0094@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0095",
+      "enabled": true,
+      "email": "bulk0095@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0096",
+      "enabled": true,
+      "email": "bulk0096@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0097",
+      "enabled": true,
+      "email": "bulk0097@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0098",
+      "enabled": true,
+      "email": "bulk0098@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0099",
+      "enabled": true,
+      "email": "bulk0099@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0100",
+      "enabled": true,
+      "email": "bulk0100@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0101",
+      "enabled": true,
+      "email": "bulk0101@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0102",
+      "enabled": true,
+      "email": "bulk0102@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0103",
+      "enabled": true,
+      "email": "bulk0103@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0104",
+      "enabled": true,
+      "email": "bulk0104@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0105",
+      "enabled": true,
+      "email": "bulk0105@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0106",
+      "enabled": true,
+      "email": "bulk0106@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0107",
+      "enabled": true,
+      "email": "bulk0107@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0108",
+      "enabled": true,
+      "email": "bulk0108@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0109",
+      "enabled": true,
+      "email": "bulk0109@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0110",
+      "enabled": true,
+      "email": "bulk0110@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0111",
+      "enabled": true,
+      "email": "bulk0111@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0112",
+      "enabled": true,
+      "email": "bulk0112@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0113",
+      "enabled": true,
+      "email": "bulk0113@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0114",
+      "enabled": true,
+      "email": "bulk0114@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0115",
+      "enabled": true,
+      "email": "bulk0115@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0116",
+      "enabled": true,
+      "email": "bulk0116@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0117",
+      "enabled": true,
+      "email": "bulk0117@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0118",
+      "enabled": true,
+      "email": "bulk0118@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    },
+    {
+      "username": "bulk0119",
+      "enabled": true,
+      "email": "bulk0119@example.test",
+      "realmRoles": [
+        "base-employee"
+      ]
+    }
+  ]
+}

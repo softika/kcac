@@ -1,0 +1,18 @@
+kcac — effective access export for Keycloak
+Copyright (C) 2026 Softika
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version. See LICENSE for the full text.
+
+WHAT THE LICENCE MEANS FOR YOU
+
+Running the kcac binary inside your organisation creates no AGPL obligations.
+You may run it, audit it, and keep its output entirely private. The licence
+only reaches you if you modify kcac and then offer the modified version to
+others as a network service.
+
+kcac is not affiliated with, endorsed by, or sponsored by Red Hat, Inc.
+"Keycloak" is a trademark of Red Hat, Inc., used here only to describe what
+this tool interoperates with.

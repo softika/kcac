@@ -1,0 +1,20 @@
+# binaries
+/kcac
+/dist/
+
+# test + local output
+*.csv
+*.out
+coverage.*
+/tmp/
+
+# editors
+.DS_Store
+.idea/
+.vscode/
+
+# never commit credentials or captured realm data
+*.secret
+secrets.env
+.env
+/local/
