@@ -26,6 +26,11 @@ sign-off capture, and pushing to GRC platforms are all out of scope. `kcac` read
 one realm and writes one file. If you need a review workflow, your compliance
 platform already has one — `kcac` exists to give it correct input.
 
+## Soon
+
+- Homebrew tap. The cask is already generated on every release build; it just
+  needs the `softika/homebrew-tap` repository and a token that can push to it.
+
 ## Possible later
 
 - Account classification beyond the current heuristics (they are documented in

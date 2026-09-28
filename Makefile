@@ -23,6 +23,9 @@ GOLANGCI_VERSION ?= v2.13
 # which is why CI runs the container rather than the action.
 GITLEAKS_IMAGE ?= ghcr.io/gitleaks/gitleaks:latest
 
+# Release tooling, kept in step with .github/workflows/release.yml.
+GORELEASER ?= go run github.com/goreleaser/goreleaser/v2@latest
+
 # Prefer the Compose plugin, fall back to the standalone V1 binary.
 COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose") -f test/docker-compose.yml
 
@@ -191,20 +194,19 @@ demo:
 	@echo "    Full CSV: /tmp/kcac-access.csv    Manifest: /tmp/kcac-manifest.json"
 	@echo
 
-## dist: Cross-compile release binaries into dist/.
+## dist: Build release artefacts locally, exactly as a release would.
 .PHONY: dist
-dist: clean
-	@echo "=== Building $(PROJECT_NAME) $(VERSION) for release..."
-	@mkdir -p dist
-	@for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do \
-		os=$${target%%/*}; arch=$${target##*/}; \
-		ext=""; if [ "$$os" = "windows" ]; then ext=".exe"; fi; \
-		echo "    $$os/$$arch"; \
-		CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch \
-			go build -ldflags "$(LDFLAGS)" -o dist/$(PROJECT_NAME)-$$os-$$arch$$ext ./cmd/kcac || exit 1; \
-	done
+dist:
+	@echo "=== Building a snapshot release into dist/..."
+	@$(GORELEASER) release --snapshot --clean --skip=publish
 	@echo
-	@shasum -a 256 dist/* 2>/dev/null || sha256sum dist/*
+	@echo "    Artefacts and checksums are in dist/"
+
+## release-check: Validate .goreleaser.yaml without building anything.
+.PHONY: release-check
+release-check:
+	@echo "=== Checking release configuration..."
+	@$(GORELEASER) check
 
 ## tidy: Tidy and verify module dependencies.
 .PHONY: tidy

@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    name: build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # GoReleaser builds the changelog from git history, which a shallow
+          # clone does not have.
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27'
+
+      # A tag should never turn into a release that does not compile or whose
+      # tests fail. Cheap insurance; the Keycloak matrix already ran on main.
+      - name: Format, vet and unit tests
+        run: make check
+
+      - uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+        env:
+          # The built-in token is enough to publish a release in this repository.
+          #
+          # When the Homebrew tap is enabled, this has to become a Personal
+          # Access Token (secrets.GH_PAT) with contents:write on
+          # softika/homebrew-tap, because GITHUB_TOKEN cannot write to another
+          # repository.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

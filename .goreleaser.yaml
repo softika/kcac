@@ -1,0 +1,104 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+project_name: kcac
+
+before:
+  hooks:
+    # download, not tidy: a release must build the committed source, not a
+    # version go.mod was edited into on the way past.
+    - go mod download
+
+builds:
+  - id: kcac
+    main: ./cmd/kcac
+    binary: kcac
+    env:
+      # Static binaries, so one artifact runs on any glibc or musl system.
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Version }}
+      - -X main.commit={{ .Commit }}
+      - -X main.date={{ .CommitDate }}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: kcac
+    formats: [tar.gz]
+    # Named to match `uname -s` and `uname -m`, which keeps install.sh to a
+    # couple of lines instead of a translation table.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - LICENSE
+      - NOTICE
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+      - "Merge pull request"
+
+homebrew_casks:
+  - name: kcac
+    # Turn this off once softika/homebrew-tap exists and a GH_PAT secret with
+    # contents:write on it is set. Until then the cask is still generated into
+    # dist/ by `make dist`, so it can be reviewed, but nothing is pushed and a
+    # release does not depend on a repository that is not there yet.
+    skip_upload: true
+    repository:
+      owner: softika
+      name: homebrew-tap
+    directory: Casks
+    homepage: "https://github.com/softika/kcac"
+    description: "Find out who really has access to your Keycloak realm, and why"
+    license: "AGPL-3.0"
+    binaries:
+      - kcac
+    commit_msg_template: "kcac {{ .Tag }}"
+
+release:
+  github:
+    owner: softika
+    name: kcac
+  draft: false
+  prerelease: auto
+  footer: |
+    ## Install
+
+    ```sh
+    curl -fsSL https://raw.githubusercontent.com/softika/kcac/main/install.sh | sh
+    ```
+
+    Every archive is listed in `checksums.txt`, which install.sh verifies.
+
+    kcac only ever reads from Keycloak.

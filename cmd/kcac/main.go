@@ -12,11 +12,17 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 )
 
-// version is overridden at build time with -ldflags "-X main.version=v0.1.0".
-var version = "dev"
+// Build metadata, stamped by the linker at release time. A bug report that names
+// the exact commit is worth a great deal more than one that says "latest".
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
 
 const usage = `kcac %s — effective access export for Keycloak
 
@@ -73,7 +79,8 @@ func run(args []string) error {
 		return runFetch(ctx, args[1:], os.Stdout, os.Stderr)
 
 	case "version", "--version", "-version":
-		_, _ = fmt.Fprintf(os.Stdout, "kcac %s\n", version)
+		_, _ = fmt.Fprintf(os.Stdout, "kcac %s\ncommit: %s\nbuilt:  %s\n%s\n",
+			version, commit, date, runtime.Version())
 		return nil
 
 	case "help", "-h", "--help":

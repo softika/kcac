@@ -100,12 +100,43 @@ easy to get wrong, in one place.
 
 ## Install
 
+**Script** (Linux and macOS, amd64 and arm64):
+
+```console
+curl -fsSL https://raw.githubusercontent.com/softika/kcac/main/install.sh | sh
+```
+
+It downloads one archive, checks it against the published SHA-256 checksums, and
+copies a single binary into `/usr/local/bin` (or `~/.local/bin` if that is not
+writable). No sudo, and it touches nothing else. Read it first if you would
+rather, it is short:
+
+```console
+curl -fsSL https://raw.githubusercontent.com/softika/kcac/main/install.sh | less
+```
+
+Pin a version or pick a directory with `KCAC_VERSION` and `KCAC_BINDIR`:
+
+```console
+curl -fsSL .../install.sh | KCAC_VERSION=v0.1.0 KCAC_BINDIR=~/bin sh
+```
+
+**Go:**
+
 ```console
 go install github.com/softika/kcac/cmd/kcac@latest
 ```
 
-Or grab a binary from [releases](https://github.com/softika/kcac/releases).
-Linux, macOS and Windows, amd64 and arm64.
+**Manually:** grab an archive from [releases](https://github.com/softika/kcac/releases).
+Linux, macOS and Windows, amd64 and arm64. Every archive is listed in
+`checksums.txt` on the release, so you can verify it yourself:
+
+```console
+sha256sum -c checksums.txt --ignore-missing
+```
+
+`kcac version` prints the exact commit it was built from, which is worth
+including in a bug report.
 
 ## Point it at your own realm
 
@@ -290,7 +321,14 @@ make test-all           # start Keycloak, run everything, stop it
 make cover              # coverage across unit and integration tests
 make audit              # golangci-lint, govulncheck and a secret scan
 make fixture            # rebuild the seeded realm
-make dist               # cross compiled release binaries
+make dist               # build release artefacts locally, exactly as a release does
+```
+
+Releases are cut by pushing a tag. GoReleaser builds every platform, writes
+`checksums.txt`, publishes the GitHub release and updates the Homebrew tap:
+
+```console
+git tag -a v0.1.0 -m "v0.1.0" && git push origin v0.1.0
 ```
 
 CI runs the same targets, so local and CI cannot drift apart. There are three
