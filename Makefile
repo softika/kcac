@@ -18,6 +18,11 @@ KC_SECRET  ?= test-secret
 # CI enforce the same rules.
 GOLANGCI_VERSION ?= v2.13
 
+# Secret scanner. The gitleaks CLI is MIT licensed and free to use; only the
+# GitHub Action wrapper requires a paid licence for organisation-owned repos,
+# which is why CI runs the container rather than the action.
+GITLEAKS_IMAGE ?= ghcr.io/gitleaks/gitleaks:latest
+
 # Prefer the Compose plugin, fall back to the standalone V1 binary.
 COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose") -f test/docker-compose.yml
 
@@ -101,9 +106,16 @@ security:
 	@echo "=== Running govulncheck..."
 	@go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
-## audit: Lint and security scan together.
+## secrets: Scan the repo and its history for committed credentials.
+.PHONY: secrets
+secrets:
+	@echo "=== Scanning for committed credentials..."
+	@docker run --rm -v "$(CURDIR):/repo" $(GITLEAKS_IMAGE) git /repo \
+		--no-banner --redact --exit-code 1
+
+## audit: Lint, vulnerability scan and secret scan together.
 .PHONY: audit
-audit: lint security
+audit: lint security secrets
 
 ## check: Everything CI enforces, minus the Keycloak matrix.
 .PHONY: check

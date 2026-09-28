@@ -37,14 +37,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # gitleaks needs history to scan commits, not just the tree.
+          # Full history: the point is catching a credential that was committed
+          # once and removed later, which a shallow clone hides.
           fetch-depth: 0
 
       # kcac's whole job is handling a Keycloak service-account secret, and the
-      # test fixture deliberately contains a well-known one. A scan keeps a real
-      # credential from ever joining it unnoticed.
-      - name: Run gitleaks
-        uses: gitleaks/gitleaks-action@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
+      # test fixture deliberately contains a well-known one. A repo used to
+      # seeing secrets in it is exactly where a real one slips in unnoticed.
+      #
+      # This runs the gitleaks CLI, which is MIT licensed and free to use. The
+      # gitleaks-action wrapper is not: it requires a paid licence for
+      # organisation-owned repositories, and softika is an organisation.
+      - name: Scan for committed credentials
+        run: make secrets

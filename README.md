@@ -288,7 +288,7 @@ make kc-stop
 make kc-start-legacy    # Keycloak 22, to exercise the older group API
 make test-all           # start Keycloak, run everything, stop it
 make cover              # coverage across unit and integration tests
-make audit              # golangci-lint plus govulncheck
+make audit              # golangci-lint, govulncheck and a secret scan
 make fixture            # rebuild the seeded realm
 make dist               # cross compiled release binaries
 ```
