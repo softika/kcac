@@ -44,7 +44,7 @@ jobs:
       # test fixture deliberately contains a well-known one. A scan keeps a real
       # credential from ever joining it unnoticed.
       - name: Run gitleaks
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
