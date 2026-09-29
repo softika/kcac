@@ -107,9 +107,30 @@ curl -fsSL https://raw.githubusercontent.com/softika/kcac/main/install.sh | sh
 ```
 
 It downloads one archive, checks it against the published SHA-256 checksums, and
-copies a single binary into `/usr/local/bin` (or `~/.local/bin` if that is not
-writable). No sudo, and it touches nothing else. Read it first if you would
-rather, it is short:
+copies a single binary into the first directory that is both writable and already
+on your `PATH`, trying `/usr/local/bin`, then `~/.local/bin`, then `~/bin`.
+
+**It never asks for root and never edits your shell config.** That has one
+consequence worth knowing before you run it: on a stock macOS, and on plenty of
+Linux setups, there is no directory that is both writable and on `PATH`.
+`/usr/local/bin` is on `PATH` but owned by root; `~/.local/bin` is yours but not
+on `PATH`. So you will need one of two one-time steps, and the installer tells
+you which:
+
+```console
+# either put the per-user directory on your PATH, once
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+
+# or install system-wide, and give a password once
+curl -fsSL https://raw.githubusercontent.com/softika/kcac/main/install.sh \
+  | sudo KCAC_BINDIR=/usr/local/bin sh
+```
+
+Neither is hidden from you, which is the point. A tool that reads your whole
+user directory should not be quietly escalating to root or rewriting your
+dotfiles to save you one command.
+
+Read the script first if you would rather, it is short:
 
 ```console
 curl -fsSL https://raw.githubusercontent.com/softika/kcac/main/install.sh | less
@@ -137,6 +158,26 @@ sha256sum -c checksums.txt --ignore-missing
 
 `kcac version` prints the exact commit it was built from, which is worth
 including in a bug report.
+
+### Uninstall
+
+There is no uninstaller because there is nothing to uninstall. `kcac` is one
+binary with no config file, no state directory, no background service, and it
+does not touch your shell configuration. Deleting it is the whole job:
+
+```console
+rm "$(command -v kcac)"
+```
+
+If you never added it to your `PATH`, it is wherever the installer said it put
+it, usually:
+
+```console
+rm ~/.local/bin/kcac
+```
+
+Anything you asked for with `-o` or `--manifest` is your data, and `kcac` never
+had an opinion about it.
 
 ## Point it at your own realm
 
@@ -215,6 +256,8 @@ The first time you run this against a real realm, it should not be memorable. A
 * **Run as a service.** No daemon, no database, no web interface, nothing to
   integrate. One command, one realm, one file. Feed that file to whatever you
   already use.
+* **Leave anything behind.** No config file, no state directory, no shell
+  configuration edits. Uninstalling is deleting one binary.
 
 ## Output reference
 
