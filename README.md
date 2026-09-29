@@ -110,25 +110,31 @@ It downloads one archive, checks it against the published SHA-256 checksums, and
 copies a single binary into the first directory that is both writable and already
 on your `PATH`, trying `/usr/local/bin`, then `~/.local/bin`, then `~/bin`.
 
-**It never asks for root and never edits your shell config.** That has one
-consequence worth knowing before you run it: on a stock macOS, and on plenty of
-Linux setups, there is no directory that is both writable and on `PATH`.
-`/usr/local/bin` is on `PATH` but owned by root; `~/.local/bin` is yours but not
-on `PATH`. So you will need one of two one-time steps, and the installer tells
-you which:
+**It never asks for root, and never edits your shell config without asking
+first.** On a stock macOS, and on plenty of Linux setups, there is no directory
+that is both writable and on `PATH`: `/usr/local/bin` is on `PATH` but owned by
+root, and `~/.local/bin` is yours but not on `PATH`. When that happens the
+installer offers to fix it and waits for an answer:
 
-```console
-# either put the per-user directory on your PATH, once
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+```
+  ~/.local/bin is not on your PATH, so 'kcac' will not be found yet.
 
-# or install system-wide, and give a password once
-curl -fsSL https://raw.githubusercontent.com/softika/kcac/main/install.sh \
-  | sudo KCAC_BINDIR=/usr/local/bin sh
+  Add it to ~/.zshrc? [y/N]:
 ```
 
-Neither is hidden from you, which is the point. A tool that reads your whole
-user directory should not be quietly escalating to root or rewriting your
-dotfiles to save you one command.
+Say no and it prints the line for you to add yourself, or the command to install
+into `/usr/local/bin` with `sudo` instead. Say yes and it appends two lines,
+one of them a comment saying it put them there. It knows zsh, bash and fish, it
+will not add the same line twice, and **with no terminal to ask on it does
+nothing**, so a CI job or an image build is never edited behind its back or left
+hanging on a prompt.
+
+To answer in advance, for scripted installs:
+
+```console
+curl -fsSL .../install.sh | KCAC_ADD_TO_PATH=1 sh   # yes, add it
+curl -fsSL .../install.sh | KCAC_ADD_TO_PATH=0 sh   # no, just tell me
+```
 
 Read the script first if you would rather, it is short:
 
@@ -139,7 +145,7 @@ curl -fsSL https://raw.githubusercontent.com/softika/kcac/main/install.sh | less
 Pin a version or pick a directory with `KCAC_VERSION` and `KCAC_BINDIR`:
 
 ```console
-curl -fsSL .../install.sh | KCAC_VERSION=v0.1.0 KCAC_BINDIR=~/bin sh
+curl -fsSL .../install.sh | KCAC_VERSION=v0.1.1 KCAC_BINDIR=~/bin sh
 ```
 
 **Go:**
@@ -175,6 +181,11 @@ it, usually:
 ```console
 rm ~/.local/bin/kcac
 ```
+
+If you let the installer put `~/.local/bin` on your `PATH`, it left two lines in
+your shell config marked `# Added by the kcac installer`. Delete them too, or
+keep them, since a `PATH` entry pointing at a directory you still use is
+harmless either way.
 
 Anything you asked for with `-o` or `--manifest` is your data, and `kcac` never
 had an opinion about it.
@@ -256,8 +267,9 @@ The first time you run this against a real realm, it should not be memorable. A
 * **Run as a service.** No daemon, no database, no web interface, nothing to
   integrate. One command, one realm, one file. Feed that file to whatever you
   already use.
-* **Leave anything behind.** No config file, no state directory, no shell
-  configuration edits. Uninstalling is deleting one binary.
+* **Change anything without telling you.** No config file, no state directory,
+  and no edits to your shell config unless you answer yes when asked.
+  Uninstalling is deleting one binary.
 
 ## Output reference
 

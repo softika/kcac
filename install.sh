@@ -13,10 +13,15 @@
 # writes nothing else, and touches no shell profile.
 #
 # Environment:
-#   KCAC_VERSION   version to install, e.g. v0.1.0   (default: latest)
-#   KCAC_BINDIR    where to install                  (default: /usr/local/bin,
-#                                                     or ~/.local/bin if that is
-#                                                     not writable)
+#   KCAC_VERSION       version to install, e.g. v0.1.0   (default: latest)
+#   KCAC_BINDIR        where to install                  (default: the first
+#                                                         writable directory on
+#                                                         your PATH, else
+#                                                         ~/.local/bin)
+#   KCAC_ADD_TO_PATH   1 or 0, to answer the PATH question without being asked.
+#                      Unset means ask if there is a terminal, and do nothing if
+#                      there is not, so this never hangs a CI job or an image
+#                      build.
 set -eu
 
 REPO="softika/kcac"
@@ -100,6 +105,50 @@ on_path() {
 	esac
 }
 
+# shell_rc prints the startup file for the current shell, or nothing if it is
+# not one we know how to edit safely.
+shell_rc() {
+	case "${SHELL:-}" in
+	*/zsh) echo "${ZDOTDIR:-$HOME}/.zshrc" ;;
+	*/bash)
+		# macOS login shells read .bash_profile, most Linux ones .bashrc.
+		if [ "$(uname -s)" = "Darwin" ]; then echo "${HOME}/.bash_profile"; else echo "${HOME}/.bashrc"; fi
+		;;
+	*/fish) echo "${HOME}/.config/fish/config.fish" ;;
+	esac
+}
+
+# path_line prints the line that would put $2 on the PATH, in $1's syntax.
+path_line() {
+	case "${1##*/}" in
+	config.fish) echo "fish_add_path $2" ;;
+	*) echo "export PATH=\"$2:\$PATH\"" ;;
+	esac
+}
+
+# add_to_path appends that line, once.
+add_to_path() {
+	rcfile="$1"
+	dir="$2"
+
+	mkdir -p "$(dirname "$rcfile")" 2>/dev/null || true
+
+	# Re-running the installer must not stack up duplicate lines, so any
+	# existing mention of the directory is treated as done.
+	if [ -f "$rcfile" ] && grep -Fq "$dir" "$rcfile" 2>/dev/null; then
+		echo "kcac install: ${rcfile} already refers to ${dir}, left unchanged"
+		return 0
+	fi
+
+	{
+		echo ""
+		echo "# Added by the kcac installer. Safe to delete."
+		path_line "$rcfile" "$dir"
+	} >>"$rcfile" 2>/dev/null || return 1
+
+	echo "kcac install: added two lines to ${rcfile}"
+}
+
 writable() {
 	# A directory that does not exist yet counts as writable if it can be
 	# created, so walk up to the first ancestor that does exist. Checking only
@@ -158,24 +207,57 @@ if on_path "$bindir"; then
 	exit 0
 fi
 
-rc=""
-case "${SHELL:-}" in
-*/zsh) rc="${ZDOTDIR:-$HOME}/.zshrc" ;;
-*/bash) [ "$(uname -s)" = "Darwin" ] && rc="${HOME}/.bash_profile" || rc="${HOME}/.bashrc" ;;
-*/fish) rc="${HOME}/.config/fish/config.fish" ;;
-esac
+rc="$(shell_rc)"
 
 echo
-echo "  ACTION NEEDED: ${bindir} is not on your PATH, so 'kcac' will not be found yet."
+echo "  ${bindir} is not on your PATH, so 'kcac' will not be found yet."
+
+# Decide whether to edit the shell startup file.
+#
+# Asking rather than assuming: this script is piped from the internet, and
+# writing to somebody's dotfiles uninvited is not a thing a tool that reads your
+# whole user directory should do. KCAC_ADD_TO_PATH answers in advance for
+# unattended installs, and with no answer and no terminal nothing is written, so
+# a CI job or an image build neither hangs nor gets edited behind its back.
+decision=""
+case "${KCAC_ADD_TO_PATH:-}" in
+1 | y | Y | yes | YES | true) decision="yes" ;;
+0 | n | N | no | NO | false) decision="no" ;;
+*)
+	if [ -n "$rc" ] && [ -r /dev/tty ]; then
+		echo
+		printf '  Add it to %s? [y/N]: ' "$rc"
+		read -r reply </dev/tty || reply=""
+		case "$reply" in
+		y | Y | yes | YES) decision="yes" ;;
+		*) decision="no" ;;
+		esac
+	else
+		decision="no"
+	fi
+	;;
+esac
+
+if [ "$decision" = "yes" ] && [ -n "$rc" ] && add_to_path "$rc" "$bindir"; then
+	echo
+	echo "  Start a new shell, or run: source ${rc}"
+	echo "  Then: kcac --help"
+	echo "  kcac only ever reads from Keycloak."
+	exit 0
+fi
+
+# Nothing was written, so say exactly what to do by hand.
+echo
+echo "  Add it yourself with:"
 echo
 if [ "${rc##*/}" = "config.fish" ]; then
 	echo "    fish_add_path ${bindir}"
 elif [ -n "$rc" ]; then
-	echo "    echo 'export PATH=\"${bindir}:\$PATH\"' >> ${rc}"
+	echo "    echo '$(path_line "$rc" "$bindir")' >> ${rc}"
 	echo "    source ${rc}"
 else
 	echo "    export PATH=\"${bindir}:\$PATH\""
-	echo "    (add that line to your shell's startup file to make it stick)"
+	echo "    (put that in your shell's startup file to make it stick)"
 fi
 echo
 echo "  Or install somewhere already on your PATH instead:"
