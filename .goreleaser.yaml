@@ -86,6 +86,20 @@ homebrew_casks:
     binaries:
       - kcac
     commit_msg_template: "kcac {{ .Tag }}"
+    # Homebrew marks cask downloads with com.apple.quarantine, and Go binaries
+    # carry only an adhoc linker signature, so macOS refuses to run it:
+    # "Apple could not verify kcac is free of malware". spctl reports
+    # "rejected". Clearing the flag on the binary we just installed is what the
+    # user would otherwise have to do by hand.
+    #
+    # The honest framing, which the README carries: this binary is not signed
+    # with an Apple Developer ID and not notarized. Anyone who would rather
+    # verify it themselves can build from source, or check the SHA-256 in
+    # checksums.txt against the cask.
+    hooks:
+      post:
+        install: |
+          system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/kcac"]
 
 release:
   github:

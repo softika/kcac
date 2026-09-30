@@ -162,6 +162,21 @@ add and nothing to reload):
 brew install softika/tap/kcac
 ```
 
+A note on macOS, since it concerns trust. These binaries are **not signed with
+an Apple Developer ID and not notarized**, so macOS marks the download as
+quarantined and refuses to run it: *"Apple could not verify kcac is free of
+malware"*. The cask clears that flag on the binary it just installed, which is
+what you would otherwise type yourself:
+
+```console
+xattr -dr com.apple.quarantine "$(command -v kcac)"
+```
+
+That is Apple attesting nothing about this binary, not the binary being
+untrustworthy, and it is worth knowing which. If you would rather not take
+either on faith, build it yourself with `go install`, or check the SHA-256 in
+the release's `checksums.txt` against the one recorded in the cask.
+
 **Go:**
 
 ```console
