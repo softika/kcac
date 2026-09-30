@@ -123,11 +123,18 @@ installer offers to fix it and waits for an answer:
 ```
 
 Say no and it prints the line for you to add yourself, or the command to install
-into `/usr/local/bin` with `sudo` instead. Say yes and it appends two lines,
-one of them a comment saying it put them there. It knows zsh, bash and fish, it
-will not add the same line twice, and **with no terminal to ask on it does
-nothing**, so a CI job or an image build is never edited behind its back or left
-hanging on a prompt.
+into `/usr/local/bin` with `sudo` instead. Say yes and it appends two lines, one
+of them a comment saying it put them there.
+
+Either way there is one step left, because **a startup file is only read when a
+shell starts**, so the shell you ran the installer in still cannot see `kcac`.
+No installer can change the environment of the shell that launched it. The last
+line of the output is the `source` command to finish, or just open a new
+terminal.
+
+It knows zsh, bash and fish, it will not add the same line twice, and **with no
+terminal to ask on it does nothing**, so a CI job or an image build is never
+edited behind its back or left hanging on a prompt.
 
 To answer in advance, for scripted installs:
 
@@ -146,6 +153,13 @@ Pin a version or pick a directory with `KCAC_VERSION` and `KCAC_BINDIR`:
 
 ```console
 curl -fsSL .../install.sh | KCAC_VERSION=v0.1.1 KCAC_BINDIR=~/bin sh
+```
+
+**Homebrew** (installs into a directory already on your `PATH`, so nothing to
+add and nothing to reload):
+
+```console
+brew install softika/tap/kcac
 ```
 
 **Go:**

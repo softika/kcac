@@ -34,10 +34,11 @@ jobs:
           version: "~> v2"
           args: release --clean
         env:
-          # The built-in token is enough to publish a release in this repository.
-          #
-          # When the Homebrew tap is enabled, this has to become a Personal
-          # Access Token (secrets.GH_PAT) with contents:write on
-          # softika/homebrew-tap, because GITHUB_TOKEN cannot write to another
-          # repository.
+          # Publishes the release in this repository only.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Commits the Homebrew cask to softika/homebrew-tap. A fine-grained
+          # PAT scoped to that one repository with contents:write, and nothing
+          # else. GITHUB_TOKEN cannot reach another repository, and a token with
+          # write on both would be able to rewrite kcac releases in order to
+          # commit a cask file.
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}

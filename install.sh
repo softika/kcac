@@ -195,6 +195,7 @@ install -m 0755 "${tmp}/${BIN}" "${bindir}/${BIN}" 2>/dev/null ||
 	die "could not write to ${bindir}. Set KCAC_BINDIR to somewhere you can write."
 
 echo "kcac install: installed ${bindir}/${BIN}"
+echo "kcac install: it only ever reads from Keycloak"
 echo
 "${bindir}/${BIN}" version || true
 
@@ -202,8 +203,7 @@ echo
 # act on, and above the version output it just scrolls away.
 if on_path "$bindir"; then
 	echo
-	echo "  Next: kcac --help"
-	echo "  kcac only ever reads from Keycloak."
+	echo "  Ready. Try: kcac --help"
 	exit 0
 fi
 
@@ -240,9 +240,16 @@ esac
 
 if [ "$decision" = "yes" ] && [ -n "$rc" ] && add_to_path "$rc" "$bindir"; then
 	echo
-	echo "  Start a new shell, or run: source ${rc}"
+	echo "  ONE STEP LEFT. That file is only read when a shell starts, so the"
+	echo "  shell you are in now still cannot see kcac. Run:"
+	echo
+	if [ "${rc##*/}" = "config.fish" ]; then
+		echo "      exec fish"
+	else
+		echo "      source ${rc}"
+	fi
+	echo
 	echo "  Then: kcac --help"
-	echo "  kcac only ever reads from Keycloak."
 	exit 0
 fi
 
@@ -260,8 +267,6 @@ else
 	echo "    (put that in your shell's startup file to make it stick)"
 fi
 echo
-echo "  Or install somewhere already on your PATH instead:"
-echo "    curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install.sh | sudo KCAC_BINDIR=/usr/local/bin sh"
+echo "  Or reinstall straight into a directory that is already on your PATH:"
 echo
-echo "  Then: kcac --help"
-echo "  kcac only ever reads from Keycloak."
+echo "      curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install.sh | sudo KCAC_BINDIR=/usr/local/bin sh"

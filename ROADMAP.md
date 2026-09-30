@@ -16,6 +16,8 @@
 - [x] `kcac explain <user>`, every path to every entitlement, as a tree
 - [x] Run manifest: versions, counts, and every limitation that applied
 - [x] CI across Keycloak majors, including a pre-23 server
+- [x] Install script with checksum verification, and a Homebrew tap at
+      `softika/homebrew-tap`
 
 Remaining before tagging v0.1.0: a release build and the `v0.1.0` tag itself.
 
@@ -25,11 +27,6 @@ Scheduling, a database, a web UI, multi-realm campaigns, reviewer workflows,
 sign-off capture, and pushing to GRC platforms are all out of scope. `kcac` reads
 one realm and writes one file. If you need a review workflow, your compliance
 platform already has one, and `kcac` exists to give it correct input.
-
-## Soon
-
-- Homebrew tap. The cask is already generated on every release build; it just
-  needs the `softika/homebrew-tap` repository and a token that can push to it.
 
 ## Considered and deliberately not built
 

@@ -70,14 +70,15 @@ changelog:
 
 homebrew_casks:
   - name: kcac
-    # Turn this off once softika/homebrew-tap exists and a GH_PAT secret with
-    # contents:write on it is set. Until then the cask is still generated into
-    # dist/ by `make dist`, so it can be reviewed, but nothing is pushed and a
-    # release does not depend on a repository that is not there yet.
-    skip_upload: true
     repository:
       owner: softika
       name: homebrew-tap
+      # A token scoped to the tap alone, rather than reusing the one that
+      # publishes the release. The built-in GITHUB_TOKEN cannot write to another
+      # repository, and a single personal token with write on both would be able
+      # to alter kcac releases just to commit a cask file. This way the token
+      # that touches the tap can do nothing else.
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     directory: Casks
     homepage: "https://github.com/softika/kcac"
     description: "Find out who really has access to your Keycloak realm, and why"
@@ -97,6 +98,12 @@ release:
 
     ```sh
     curl -fsSL https://raw.githubusercontent.com/softika/kcac/main/install.sh | sh
+    ```
+
+    Or with Homebrew, which installs into a directory already on your PATH:
+
+    ```sh
+    brew install softika/tap/kcac
     ```
 
     Every archive is listed in `checksums.txt`, which install.sh verifies.
