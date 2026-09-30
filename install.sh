@@ -118,6 +118,33 @@ shell_rc() {
 	esac
 }
 
+# already_configured reports whether a startup file already puts $1 on the PATH,
+# even though the running shell has not picked it up yet.
+#
+# Debian and Ubuntu ship a ~/.profile that adds ~/.local/bin only "if [ -d ]",
+# so a directory the installer has just created is absent from the current
+# session but present in every shell started afterwards. Telling somebody to
+# edit their profile in that situation is wrong: the answer is to open a new
+# shell, and editing would duplicate what the distro already does.
+already_configured() {
+	dir="$1"
+
+	# Startup files often refer to $HOME rather than the expanded path.
+	rel=""
+	case "$dir" in
+	"${HOME}"/*) rel="\$HOME/${dir#"${HOME}"/}" ;;
+	esac
+
+	for f in "${HOME}/.profile" "${HOME}/.bash_profile" "${HOME}/.bash_login" \
+		"${HOME}/.bashrc" "${ZDOTDIR:-$HOME}/.zshrc" "${ZDOTDIR:-$HOME}/.zprofile" \
+		"${ZDOTDIR:-$HOME}/.zshenv" "${HOME}/.config/fish/config.fish"; do
+		[ -f "$f" ] || continue
+		grep -Fq "$dir" "$f" 2>/dev/null && return 0
+		[ -n "$rel" ] && grep -Fq "$rel" "$f" 2>/dev/null && return 0
+	done
+	return 1
+}
+
 # path_line prints the line that would put $2 on the PATH, in $1's syntax.
 path_line() {
 	case "${1##*/}" in
@@ -211,6 +238,18 @@ rc="$(shell_rc)"
 
 echo
 echo "  ${bindir} is not on your PATH, so 'kcac' will not be found yet."
+
+# Nothing to add if a startup file already handles this directory, which is the
+# normal case on Debian and Ubuntu for ~/.local/bin.
+if already_configured "$bindir"; then
+	echo
+	echo "  Your shell config already adds it, so a new shell will find it. Run:"
+	echo
+	echo "      exec ${SHELL:-sh} -l"
+	echo
+	echo "  Then: kcac --help"
+	exit 0
+fi
 
 # Decide whether to edit the shell startup file.
 #
