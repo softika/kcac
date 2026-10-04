@@ -9,6 +9,12 @@ LDFLAGS = -s -w -X main.version=$(VERSION)
 # Seeded Keycloak used by the integration tests. KC_VERSION selects the server
 # major: 22.0 predates GET /groups/{id}/children and so exercises the fallback.
 KC_VERSION ?= 26.0
+
+# Federation fixture. IMPORT copies group membership into Keycloak at user
+# creation; LDAP_ONLY reads it live from the directory. The difference decides
+# whether a review built on Keycloak data is still true, so both are testable.
+LDAP_GROUP_MODE ?= IMPORT
+LDAP_EDIT_MODE  ?= READ_ONLY
 KC_URL     ?= http://localhost:8080
 KC_REALM   ?= kcac-test
 KC_CLIENT  ?= kcac-audit
@@ -153,11 +159,34 @@ kc-start-legacy:
 	@echo "    to the nested subGroups in /groups. Both paths must agree."
 	@echo
 
-## kc-stop: Stop Keycloak and discard its data.
+## ldap-start: Start Keycloak plus a seeded OpenLDAP and federate them.
+.PHONY: ldap-start
+ldap-start:
+	@echo "=== Starting Keycloak $(KC_VERSION) and OpenLDAP..."
+	@KC_VERSION=$(KC_VERSION) $(COMPOSE) --profile ldap up -d
+	@./test/wait-for-keycloak.sh
+	@./test/setup-ldap-federation.sh $(LDAP_GROUP_MODE) $(LDAP_EDIT_MODE)
+	@echo
+	@echo "    Directory:  ldap://localhost:$${LDAP_PORT:-3890}  (cn=admin,dc=kcac,dc=test / admin)"
+	@echo "    Group mapper mode: $(LDAP_GROUP_MODE)   Provider edit mode: $(LDAP_EDIT_MODE)"
+	@echo
+	@echo "    Then: make ldap-experiment"
+	@echo
+
+## ldap-experiment: Does a directory removal reach Keycloak? Measures it.
+.PHONY: ldap-experiment
+ldap-experiment:
+	@./test/ldap-staleness-experiment.sh
+
+## kc-stop: Stop Keycloak and the LDAP fixture, discarding their data.
 .PHONY: kc-stop
 kc-stop:
 	@echo "=== Stopping Keycloak..."
-	@$(COMPOSE) down -v
+	@# --profile ldap is required even when LDAP was never started: compose
+	@# ignores profile-gated services on `down`, so without it kcac-test-ldap
+	@# survives, keeps a reference to the network that was just deleted, and
+	@# the next ldap-start fails with "network ... not found".
+	@$(COMPOSE) --profile ldap down -v
 
 ## kc-logs: Tail the Keycloak container logs.
 .PHONY: kc-logs

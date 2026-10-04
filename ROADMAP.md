@@ -28,6 +28,49 @@ sign-off capture, and pushing to GRC platforms are all out of scope. `kcac` read
 one realm and writes one file. If you need a review workflow, your compliance
 platform already has one, and `kcac` exists to give it correct input.
 
+## Next
+
+**Report LDAP federation modes beside federated grants.** This one is not
+speculative: it affects group memberships, which `kcac` already reports today.
+
+A group LDAP mapper has its own `mode`, separate from the provider's Edit Mode.
+Rather than infer the difference, there is now an LDAP fixture in the repo that
+measures it. Remove somebody from a group in the directory, then ask Keycloak:
+
+```console
+make ldap-start LDAP_GROUP_MODE=IMPORT
+make ldap-experiment
+```
+
+**`IMPORT`: the removal never arrives.**
+
+```
+directory says: l.stable
+keycloak says:  /ldap-store-managers
+triggering a FULL sync... {"updated": 2, "status": "2 updated users"}
+keycloak says:  /ldap-store-managers
+```
+
+The sync reports two users updated and the stale membership survives it.
+Somebody removed from a group in the directory keeps the Keycloak membership
+indefinitely, so Keycloak over-reports their access and `kcac` faithfully
+reports Keycloak.
+
+**`LDAP_ONLY`: the removal arrives, but caching can delay it.** Membership is
+read from the directory, so it is correct. However the provider's default
+`cachePolicy` caches it, and in testing Keycloak kept reporting the old
+membership until something invalidated that cache. With `cachePolicy=NO_CACHE`
+the removal was visible immediately.
+
+So there are two distinct ways a review can be reading access that no longer
+exists at the source, and neither shows up in the output. That is worse than a
+revoke failing, because it over-reports rather than under-reports.
+
+`kcac` already knows which accounts are federated, so reading each provider's
+Edit Mode, each group mapper's `mode` and the cache policy, recording them in
+the manifest, and flagging the affected grants is cheap and is something nothing
+else does.
+
 ## Considered and deliberately not built
 
 **Reading several realms from one client.** A service account in the `master`
@@ -68,11 +111,25 @@ Three things have to be solved before it would be worth having:
   a reviewer "no attribute access here" when the truth is "cannot see". `kcac`
   would have to detect that and say so.
 
-There is one thing worth doing that nothing else does: when the attribute came
-from an external directory, revoking it in Keycloak achieves nothing, because the
-next sync puts it back. A review that recommends a revocation which silently
-reverts is worse than no review. `kcac` already knows which accounts are
-federated, so it could say "revoke this at the source, not here".
+There is one thing worth doing here that nothing else does, and a reader on
+r/keycloak corrected my original understanding of it. Whether a revoke sticks
+depends on the LDAP provider's **Edit Mode**, and the three modes fail
+differently:
+
+* `READ_ONLY`: Keycloak rejects the edit with an error, so the revoke fails
+  loudly and nobody believes it worked.
+* `WRITABLE`: the change is written back to the directory, so it holds.
+* `UNSYNCED`: the change is stored in Keycloak's local database only, and the
+  directory keeps the old value. This is the mode where a revoke looks done and
+  is not done anywhere that matters.
+
+There is a further trap on the same page: the initial mappers are configured
+from the Edit Mode chosen when the provider was **created**, and changing the
+mode afterwards does not reconfigure them. A provider created as `UNSYNCED` and
+switched later can still be reading from the local database.
+
+So the useful thing is to record each provider's Edit Mode beside any grant that
+comes from a federated account.
 
 **If your applications authorize on user attributes rather than roles, please open
 an issue.** Knowing which attributes you use and where they come from is what

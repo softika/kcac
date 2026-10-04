@@ -29,3 +29,26 @@ services:
       - "${KC_PORT:-8080}:8080"
     volumes:
       - ../testdata/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+
+  # Only started by the "ldap" profile, so the ordinary fixture stays fast:
+  #
+  #   docker compose -f test/docker-compose.yml --profile ldap up -d
+  #
+  # Exists to answer one question that documentation does not: when a user is
+  # removed from a group in the directory, does Keycloak notice? The answer
+  # decides whether an access review built on Keycloak data is still true, and
+  # it depends on the group mapper's mode.
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: kcac-test-ldap
+    profiles: [ldap]
+    environment:
+      LDAP_ORGANISATION: "kcac test"
+      LDAP_DOMAIN: "kcac.test"
+      LDAP_ADMIN_PASSWORD: "admin"
+    # Loaded at first start only, which is why kc-stop discards the volume.
+    volumes:
+      - ./ldap/seed.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/seed.ldif:ro
+    command: ["--copy-service"]
+    ports:
+      - "${LDAP_PORT:-3890}:389"

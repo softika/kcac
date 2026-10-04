@@ -1,0 +1,37 @@
+# Seed directory for the kcac LDAP federation fixture.
+#
+# Two people and one group. l.mover exists so a membership can be removed from
+# the directory after Keycloak has imported the user, which is the case that
+# decides whether a review built on Keycloak data is still true.
+#
+# Credentials here are public by design. Never reuse them.
+
+dn: ou=people,dc=kcac,dc=test
+objectClass: organizationalUnit
+ou: people
+
+dn: ou=groups,dc=kcac,dc=test
+objectClass: organizationalUnit
+ou: groups
+
+dn: uid=l.stable,ou=people,dc=kcac,dc=test
+objectClass: inetOrgPerson
+uid: l.stable
+cn: Stable Member
+sn: Stable
+mail: l.stable@example.test
+userPassword: password
+
+dn: uid=l.mover,ou=people,dc=kcac,dc=test
+objectClass: inetOrgPerson
+uid: l.mover
+cn: Mover Member
+sn: Mover
+mail: l.mover@example.test
+userPassword: password
+
+dn: cn=ldap-store-managers,ou=groups,dc=kcac,dc=test
+objectClass: groupOfNames
+cn: ldap-store-managers
+member: uid=l.stable,ou=people,dc=kcac,dc=test
+member: uid=l.mover,ou=people,dc=kcac,dc=test
